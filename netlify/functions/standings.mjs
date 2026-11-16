@@ -27,9 +27,12 @@ export function parseTournament(html) {
   const lines = [];
   for (const [id, prefix] of [["varsity", ""], ["novice", "Novice "]]) {
     const groups = new Map();
-    for (const c of rows(pane(html, id))) {
-      if (c.length < 3 || !SCHOOL.test(strip(c[1]))) continue;
-      const label = ROUND[strip(c[0]).toLowerCase()] || strip(c[0]);
+    const all = rows(pane(html, id)).filter((c) => c.length >= 3);
+    const firsts = all.filter((c) => /^(1st|co-?champ)/i.test(strip(c[0]))).length;
+    for (const c of all) {
+      if (!SCHOOL.test(strip(c[1]))) continue;
+      const place = strip(c[0]).toLowerCase();
+      const label = /co-?champ/.test(place) || (place === "1st" && firsts > 1) ? "Co-champions" : (ROUND[place] || strip(c[0]));
       const pair = strip(c[2]).replace(/\s+and\s+/, " & ");
       if (!groups.has(label)) groups.set(label, []);
       groups.get(label).push(pair);
