@@ -48,14 +48,16 @@ export function parseTournament(html) {
 }
 
 async function get(path) {
-  const r = await fetch(BASE + path, { headers: { "user-agent": "MarylandDebateSociety-site/1.0" } });
+  const r = await fetch(BASE + path, { headers: { "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36", "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "accept-language": "en-US,en;q=0.9" } });
   if (!r.ok) throw new Error(path + " returned " + r.status);
   return r.text();
 }
 
 export default async () => {
   try {
-    const [home, list] = await Promise.all([get("/"), get("/core/tournaments/")]);
+    const home = await get("/");
+    let list = "";
+    try { list = await get("/core/tournaments/"); } catch (e) { /* results are optional; standings still update */ }
     const standings = parseStandings(home);
     const all = rows(list).filter((c) => c.length >= 5).map((c) => ({ id: (c[0].match(/tournaments\/(\d+)/) || [])[1], name: strip(c[1]), date: strip(c[2]), season: strip(c[3]), teams: num(strip(c[4])) }))
       .filter((t) => t.id && /\d\d\/\d\d\/\d{4}/.test(t.date));
